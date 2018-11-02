@@ -1,0 +1,399 @@
+#!/usr/bin/python3s
+
+import random
+import sys
+
+#basic functions
+class point:                                    
+    def __init__(self,x,y):
+        self.x=x  
+        self.y=y  
+        self.available=[]  
+        self.value=0 
+
+def initPoint(sudoku):  
+    '''read a sudoku, save the information of each cell into a class, and return a list of class'''
+    pointList=[]   
+    for i in range(0,len(sudoku)):  
+        if sudoku[i] == 0:
+            p=point(i//9,i%9)
+            p.value = 0     
+            for j in range(1,10):  
+                if j not in rowNum(p,sudoku) and j not in colNum(p,sudoku) and j not in blockNum(p,sudoku):  
+                    p.available.append(j) 
+            pointList.append(p) 
+        if sudoku[i] != 0: 
+            p=point(i//9,i%9) 
+            p.value = sudoku[i]
+            p.available.append(sudoku[i])
+            pointList.append(p)          
+    return pointList
+
+def isfull(sudoku):
+    for i in range(0,len(sudoku)):
+        if sudoku[i] == 0:
+            return False
+    return True
+
+       
+def rowNum(p,sudoku): 
+    '''get the exsited numbers on the same raw, return as a set''' 
+    row=set(sudoku[p.x*9:(p.x+1)*9])
+    if 0 in row:  
+        row.remove(0)  
+    return row #set type  
+
+              
+def colNum(p,sudoku): 
+    '''get the exsited numbers on the same column, return as a set'''  
+    col=[]  
+    length=len(sudoku)  
+    for i in range(p.y,length,9):  
+        col.append(sudoku[i])  
+    col=set(col)
+    if 0 in col:  
+        col.remove(0)  
+    return col #set type  
+  
+def blockNum(p,sudoku):
+    '''get the exsited numbers on the same block, return as a set'''   
+    block_x=p.x//3  
+    block_y=p.y//3  
+    block=[]  
+    start=block_x*3*9+block_y*3  
+    for i in range(start,start+3):  
+        block.append(sudoku[i])  
+    for i in range(start+9,start+9+3):  
+        block.append(sudoku[i])  
+    for i in range(start+9+9,start+9+9+3):  
+        block.append(sudoku[i])  
+    block=set(block)
+    if 0 in block:  
+        block.remove(0)  
+    return block #set type
+#-----------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------
+#Solver
+#First method to try
+def solve_part(sudoku):
+    '''solve the sudoku by comparing the available number lists'''
+    if isfull(sudoku):
+        #print('success')
+        #showSudoku(sudoku)
+        return       
+    else:
+       while True:  
+           sudoku_old = sudoku[::]
+           check_unique_avialNum(sudoku)
+           update_1_availNum_sudoku(sudoku)
+           pointList = initPoint(sudoku)
+           if  sudoku_old == sudoku:
+               break
+    return  
+
+def check_availNum_1(sudoku):
+    '''check if the length of the available number list is 1, and if so, update sudoku'''
+    pointList = initPoint(sudoku)
+    for i in range(0,len(pointList)):
+        p=pointList[i]
+        if len(p.available) == 1:      #check if the available number length is 1
+            p.value = p.available[0]
+            sudoku[p.x*9+p.y] = p.value
+            
+def update_1_availNum_sudoku(sudoku): 
+    '''update the sudoku with the only available number'''           
+    if isfull(sudoku):
+        #print('success')
+        #showSudoku(sudoku)
+        return       
+    else:
+       while True:  
+           sudoku_old = sudoku[::]
+           check_availNum_1(sudoku)
+           pointList = initPoint(sudoku)
+                
+           if sudoku_old == sudoku:
+               break
+       return            
+      
+def check_unique_avialNum(sudoku):
+    '''compare the available number lists within the same row, column and block, update sudoku with the unique candidate'''
+    pointList = initPoint(sudoku) 
+    for i in range(0,len(pointList)):  #check the rows
+        p=pointList[i]
+        if len(p.available) != 1:  # if sudoku[i] != 0: 
+            for value in p.available:  
+                flag = False
+                for j in range(0, 9):  
+                    if j != p.y:
+                        if value in pointList[p.x * 9 + j].available:
+                            flag = True                                 
+                            break
+                if flag is False:  
+                    p.value = value
+                    sudoku[p.x*9+p.y] = p.value
+                    p.available.clear()
+                    p.available.append(value)
+                    break
+                    
+    pointList = initPoint(sudoku)
+    for i in range(0,len(pointList)):  #check the colums
+         p=pointList[i]
+         if len(p.available) != 1:
+             for value in p.available:  
+                 flag = False
+                 for j in range(0, 9):  
+                     if j != p.x:
+                         if value in pointList[j* 9 + p.y].available:
+                             flag = True                                 
+                             break
+                 if flag is False:  
+                     p.value = value
+                     sudoku[p.x*9+p.y] = p.value
+                     p.available.clear()
+                     p.available.append(value)
+                     break
+                     
+    pointList = initPoint(sudoku)
+    for i in range(0,len(pointList)):  #check the block
+         p=pointList[i]
+         if len(p.available) != 1:
+             for value in p.available:  
+                 flag = False
+                 for k in range(0, 3):
+                     for t in range(0, 3):
+                         if (p.x // 3 * 3 + k) * 9 + p.y // 3 * 3 + t != i:
+                             if value in pointList[(p.x // 3 * 3 + k) * 9 + p.y // 3 * 3 + t].available:
+                                 flag = True                                 
+                                 break
+                     if flag is True:
+                         break
+                 if flag is False:  
+                     p.value = value
+                     sudoku[p.x*9+p.y] = p.value
+                     p.available.clear()
+                     p.available.append(value)
+                     break
+#-----------------------------------------------------------------------------------------------------------------         
+#backtracking method
+def solve_sudoku(sudoku,pointList):
+    if isfull(sudoku):
+        #print('success')
+        #showSudoku(sudoku)
+        return
+    if isfull(sudoku) is not True:
+        first0 = sudoku.index(0)
+        p = pointList[first0]
+        candidates = p.available
+        for value in candidates:
+            if value not in rowNum(p,sudoku) and value not in colNum(p,sudoku) and value not in blockNum(p,sudoku):
+                sudoku[first0] = value
+                solve_sudoku(sudoku,pointList)
+            if isfull(sudoku):
+                break
+            sudoku[first0] = 0
+
+#solution number control
+def count_solve(sudoku,pointList):
+    '''control the solution of a sudoku is nomore than 1'''
+    sudoku_try = sudoku[::] 
+    pointList_old = pointList[::]
+                  
+    #solve_sudoku(sudoku_try,pointList)   #first solution
+    solve_part(sudoku_try)  #faster
+    if isfull(sudoku_try): #remove the first0 candidates from the available numbers
+        first0 = sudoku.index(0)
+        p = pointList[first0]
+        p.available.remove(sudoku_try[first0])
+    sudoku_try = sudoku[::]
+    
+    solve_sudoku(sudoku_try,pointList) #try the solve the sudoku again whiout the 
+    if isfull(sudoku_try): #another solution exsits
+        return False
+    if isfull(sudoku_try) is not True:
+        return True      
+
+
+
+
+
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
+#Generate
+def get_random_num(p,sudoku):   
+    '''by given a position, get a random number from all the valid numbers'''
+    
+    candidate = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    
+    for number in rowNum(p,sudoku):
+        if number in candidate:
+            candidate.remove(number)
+    for number in colNum(p,sudoku):
+        if number in candidate:
+            candidate.remove(number)
+    for number in blockNum(p,sudoku):
+        if number in candidate:
+            candidate.remove(number)
+
+    if len(candidate) == 0:    
+        random_num = -1
+    else:
+        random_num = random.choice(candidate)  
+
+    return random_num
+    
+def sudoku_generate_backtracking():
+    '''generate a complete sudoku'''  
+    sudoku = [0] * 81
+    pointList = initPoint(sudoku)
+    i = 0
+    while i < 81:
+        random_num = get_random_num(pointList[i],sudoku)  
+        if random_num == -1:  
+            sudoku = [0] * 81
+            i = 0
+        else:
+            sudoku[i] = random_num
+            i += 1
+    return sudoku
+   
+def sudoku_puzzle_dibble(sudoku,n):
+    '''change the random cell's value into '''
+    sudoku_dibble = sudoku[:]
+    enable_choice = list()
+    for i in range(0, 81):
+       enable_choice.append(i)
+    i = 0
+    j = 0 
+    while i < n:
+        random.shuffle(enable_choice)
+        random_index = enable_choice[j]
+        if sudoku_dibble[random_index] != 0:
+            sudoku_dibble[random_index] = 0
+            sudoku_tmp = sudoku_dibble[::]
+            pointList = initPoint(sudoku_tmp)
+            flag = count_solve(sudoku_tmp,pointList)
+            if flag:  #one sulution
+                i += 1 
+                #print(sudoku_dibble)
+                #print(i)   
+                enable_choice.remove(random_index)
+                random.shuffle(enable_choice)
+                j = 0
+            else:  
+                sudoku_dibble[random_index] = sudoku[random_index]
+                j += 1
+                if j >= len(enable_choice):
+                    break
+            random_index = enable_choice[j]
+        else:
+            random_index = random.choice(enable_choice)
+    return sudoku_dibble 
+    
+#------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+#input and output
+def input_sudoku():
+    if len(sys.argv)==1:
+        operation = input("if you want to input a sudoku, please enter the filename. If you need to generate a sudoku, please enter 'Generate'.\n")
+        if operation.lower() == 'generate':
+            diff = input("Please enter the difficulty of the sudoku you want. E:easy M:medium H:hard \n")
+            print('please wait, program is trying to give you a sudoku, this may take 2mins...!')
+            sudoku_com = sudoku_generate_backtracking()
+            if diff.upper() == 'E' :
+                n = 19
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            if diff.upper() == 'M' :
+                n = 39
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            if diff.upper() == 'H' :
+                n = 59
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            #showSudoku(sudoku_com)
+            print('\n')
+        else:
+            filename = operation
+            try:
+                infile = open(filename,'r')
+            except IOError as error:
+                sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+                sys.exit(1)
+            filelist = list()
+            for line in infile:
+                filelist.extend(line[:-1].split())
+            sudoku = list()
+            for i in range(0,len(filelist)):
+                if  filelist[i] is 'x':
+                    sudoku.append(0)
+                else:
+                    sudoku.append(int(filelist[i]))
+    if len(sys.argv)>1:
+        if sys.argv[1].lower() == 'generate':
+            diff = input("Please enter the difficulty of the sudoku you want. E:easy M:medium H:hard \n")
+            print('please wait, program is trying to give you a sudoku, this may take 2mins...!')
+            sudoku_com = sudoku_generate_backtracking()
+            if diff.upper() == 'E' :
+                n = 19
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            if diff.upper() == 'M' :
+                n = 39
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            if diff.upper() == 'H' :
+                n = 59
+                sudoku = sudoku_puzzle_dibble(sudoku_com,n)
+            #showSudoku(sudoku_com)
+            print('\n')
+        else:
+            filename=sys.argv[1]
+            try:
+                infile = open(filename,'r')
+            except IOError as error:
+                sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+                sys.exit(1)
+            filelist = list()
+            for line in infile:
+                filelist.extend(line[:-1].split())
+            sudoku = list()
+            for i in range(0,len(filelist)):
+                if  filelist[i] is 'x':
+                    sudoku.append(0)
+                else:
+                    sudoku.append(int(filelist[i]))
+    return sudoku 
+
+def showSudoku(sudoku):  
+    for i in range(len(sudoku)):
+        print(sudoku[i],end=' ')
+        if (i + 1) % 9 == 0:
+            print('\n')
+        elif (i + 1) % 3 == 0:
+            print ('|',end=' ')
+        if (i + 1) % 27 == 0 and (i + 1) % 81 != 0:
+            print('------+-------+------')   
+    
+ 
+#-------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------     
+#main program    
+sudoku = input_sudoku()
+showSudoku(sudoku)
+print('\n')
+
+operation = input("Please enter 's' to solve this sudoku.\n")
+if operation.lower() == 's':
+    sudoku_try = sudoku[::]
+    solve_part(sudoku_try)
+    if isfull(sudoku_try):
+        print('success')
+        showSudoku(sudoku_try)
+    else:
+        pointList = initPoint(sudoku)
+        solve_sudoku(sudoku,pointList) 
+        if isfull(sudoku): 
+            print('success')
+            showSudoku(sudoku)
+            
+
+
+
+      

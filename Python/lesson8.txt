@@ -1,0 +1,329 @@
+1. Create a dictionary where the keys are codons and the value are the one-letter-code for the amino acids. The dictionary will function as a look-up table. You can find a list here.
+#!/usr/bin/python3
+import sys
+
+if len(sys.argv)==1:
+  st=input('Please enter the file name: ')
+  
+if len(sys.argv)>1:
+  st=sys.argv[1]
+
+# the amino dictionary
+codon={'ATT':'I', 'ATC':'I', 'ATA':'I', \
+         'CTT':'L', 'CTC':'L', 'CTA':'L', 'CTG':'L','TTA':'L','TTG':'L',\
+         'GTT':'V', 'GTC':'V', 'GTA':'V', 'GTG':'V',\
+         'TTT':'F', 'TTC':'F',\
+         'ATG':'M',\
+         'TGT':'C','TGC':'C',\
+         'GCT':'A', 'GCC':'A', 'GCA':'A', 'GCG':'A',\
+         'GGT':'G', 'GGC':'G','GGA':'G','GGG':'G',\
+         'CCT':'P','CCC':'P','CCA':'P','CCG':'P',\
+         'ACT':'T','ACC':'T','ACA':'T','ACG':'T',\
+         'TCT':'S','TCC':'S','TCA':'S','TCG':'S','AGT':'S','AGC':'S',\
+         'TAT':'Y','TAC':'Y',\
+         'TGG':'W',\
+         'CAA':'Q','CAG':'Q',\
+         'AAT':'N','AAC':'N',\
+         'CAT':'H','CAC':'H',\
+         'GAA':'D','GAG':'D',\
+         'GAT':'H','GAC':'H',\
+         'AAA':'K','AAG':'K',\
+         'CGT':'R','CGC':'R','CGA':'R','CGG':'R','AGA':'R','AGG':'R',\
+         'TAA':'STOP','TAG':'STOP','TGA':'STOP'}
+
+try:
+  if st.upper() not in list(codon.keys()):
+    raise KeyError(" this condon dose not code aminos")
+except KeyError as error:
+  sys.stderr.write(str(error) + "\n")
+  sys.exit(1)
+  
+print(' the amino this codon code is: ', codon[st.upper()])
+
+2. Use the dictionary from the previous exercise in a program, that translates all the nucleotide fasta entries in dna7.fsa to amino acid sequence. Save the results in a file aa7.fsa in fasta format. Remember to keep the 'headlines' for each entry and add 'Amino Acid Sequence' to each of them. The STOP codon is NOT a part of the amino acid sequence.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+
+# the amino dictionary
+codon={'ATT':'I', 'ATC':'I', 'ATA':'I', \
+         'CTT':'L', 'CTC':'L', 'CTA':'L', 'CTG':'L','TTA':'L','TTG':'L',\
+         'GTT':'V', 'GTC':'V', 'GTA':'V', 'GTG':'V',\
+         'TTT':'F', 'TTC':'F',\
+         'ATG':'M',\
+         'TGT':'C','TGC':'C',\
+         'GCT':'A', 'GCC':'A', 'GCA':'A', 'GCG':'A',\
+         'GGT':'G', 'GGC':'G','GGA':'G','GGG':'G',\
+         'CCT':'P','CCC':'P','CCA':'P','CCG':'P',\
+         'ACT':'T','ACC':'T','ACA':'T','ACG':'T',\
+         'TCT':'S','TCC':'S','TCA':'S','TCG':'S','AGT':'S','AGC':'S',\
+         'TAT':'Y','TAC':'Y',\
+         'TGG':'W',\
+         'CAA':'Q','CAG':'Q',\
+         'AAT':'N','AAC':'N',\
+         'CAT':'H','CAC':'H',\
+         'GAA':'D','GAG':'D',\
+         'GAT':'H','GAC':'H',\
+         'AAA':'K','AAG':'K',\
+         'CGT':'R','CGC':'R','CGA':'R','CGG':'R','AGA':'R','AGG':'R',\
+         'TAA':'STOP','TAG':'STOP','TGA':'STOP'}
+
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+  
+# read the file to get the lists of headline and sequences
+headline =list()
+dna = list()
+flag = False
+sequence=''
+
+# Skip the fisr line
+line = infile.readline()
+headline.append(line[:-1] + " Amino Acid Sequence\n" )
+flag=True
+for line in infile:
+   flag = True
+   if line.startswith('>'):
+     flag = False
+     headline.append(line[:-1] + " Amino Acid Sequence\n" )
+     dna.append(sequence)
+     sequence=''
+   if flag: 
+     sq=re.findall('[A-Z]+',line)        
+     sequence += ''. join(sq)
+dna.append(sequence)
+infile.close()
+
+# translate the sequences
+j=0
+seq=''
+aminolist=list()
+for i in range(0,len(dna)):
+  aminoseq=''
+  j=0
+  while j < len(dna[i]):
+    seq = str(dna[i][j:j+3])
+    if seq.upper() in list(codon.keys()) and codon.get(seq.upper())!= 'STOP':
+      aminoseq += str(codon.get(seq.upper()))
+    if codon.get(seq.upper())== 'STOP': 
+      pass
+    j += 3
+  aminolist.append(aminoseq)
+  
+
+# Output sequence
+filehandle = open('aa7.fsa', 'w')
+i=0  
+while i < len (headline):
+  filehandle.write(headline[i])
+  for j in range(0,len(aminolist[i]),60):
+    filehandle.write(aminolist[i][j:j+60] + "\n")
+  i += 1
+filehandle.close()
+
+3. You have made a program (let's call it the X-program), which as input takes a file of accession numbers, start10.dat and produces some output, which is in res10.dat. Now you count the lines in your input file and your output file and you discover that the line numbers do not match. Horror - your program does not produce output for some input. Now the assignment is to discover which accession numbers did not produce output. This can be done in various ways, but now you have to use a set. Print the results.
+#!/usr/bin/python3
+import sys
+import re
+
+#read start10.dat
+try:
+  infile = open('start10.dat','r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+startac = set() 
+for line in infile:
+  startac.add(line[:-1])
+infile.close()
+
+# read res10.dat
+try:
+  handlefile = open('res10.dat','r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+resac=set()
+for line in handlefile:
+  ac = None
+  ac = re.search(r'[A-Z]{1,2}\d{5,}.\w+.\d+',line)
+  resac.add(ac.group())
+handlefile.close()
+
+diff = startac.difference(resac)
+
+#print the result
+try:
+  if len(diff)==0:
+    print('there is no differnence between the two files')
+except ValueError as error:
+  sys.stderr.write(str(error) + "\n")
+  sys.exit(1)
+
+print('the missing accession numbers are:', diff)
+
+4. In the file ex5.acc are a lot of accession numbers, where some are duplicates. Earlier we just removed the duplicates, now we should count them. Make a program that reads the file once, and prints a list (or writes a file) with the unique accession numbers and the number of occurrences in the file. A line should look like this: AC24677 2, if this accession occurs twice in ex5.acc.
+#!/usr/bin/python3
+import sys
+import re
+
+#read start10.dat
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+  
+# read the file
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+acoriginal=dict()
+for line in infile:
+  ac = None
+  ac = re.search(r'[A-Z]{1,2}\d{5,}',line)
+  if ac.group() in acoriginal:
+    acoriginal[ac.group()] += 1
+  else:
+    acoriginal[ac.group()] = 1
+infile.close()
+
+for item in acoriginal:
+  print(item,' ', acoriginal[item])
+
+5. In the genbank files data?.gb you should extract the coding DNA sequence as you already did in 7.9. Next you have to display a list of codons USED in the coding sequence and the number of times they are used.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+sq=None
+
+
+flag2,flag3= False,False
+
+medline=list()
+dna,aminoseq='',''
+cdna=list()
+
+for line in infile:
+   identifier = line
+  
+     # Extract the DNA  
+   if identifier.startswith('//'):
+     flag2 = False
+   if flag2:
+     sq=re.findall('[a-z]+',identifier)    
+     dna += ''. join(sq)
+   if identifier.startswith('ORIGIN'):
+     flag2 = True
+     
+   # Extract the coding DNA position.
+   if  '/' in line:
+     flag3 = False 
+   if flag3:
+     cdna += re.findall('\d{2,}',line)
+   if 'CDS' in line:
+     flag3 = True 
+     cdna += re.findall('\d{2,}',line)
+infile.close()
+
+#geting the coding DNA sequence
+i=0
+j=0
+codingdna=''
+print('the  coding DNA sequence is:'),
+for i in range(0,len(cdna),2):
+  for j in range(int(cdna[i]),int(cdna[i+1])+1):
+    codingdna += dna[j-1]
+print(codingdna)
+
+#split the sequence into codon list and count them
+i=0
+codon=list()
+for i in range(0,len(codingdna),3):
+  codon.append(codingdna[i:i+3])
+
+result=dict()
+for i in range(0,len(codon)):
+  if codon[i] in result:
+    result[codon[i]] += 1
+  else:
+    result[codon[i]] = 1
+
+for item in result:
+  print(item,' ', result[item])
+
+6.In the data1.gb file there are 6 references (to articles). Make a program that extracts all authors from the references, eliminates those that are duplicates and print the list of authors. You will notice that some authors seems to be the same person using different initials. You should only consider a person a duplicate if the name matches excatly. This should also work for the other Genbank entries. Beware: there traps in this exercise, check your output properly. You are free to use sets/dictionaries or not in this exercise.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+# extract author name
+name=list()
+flag= False
+for line in infile:
+  if 'AUTHORS' in line:
+    flag = True
+  if flag:
+    name += re.findall('([A-Z][a-z]+,(?:[A-Z]\.)+)',line)   
+  if line[-2] == '.':
+    flag = False
+infile.close()
+
+authors=dict()
+for i in range(0,len(name)):
+  if name[i] in authors:
+    authors[name[i]] += 1
+  else:
+    authors[name[i]] = 1
+    
+print('the authors are:', authors.keys())
+
+
+
+
+
+
+
+
+

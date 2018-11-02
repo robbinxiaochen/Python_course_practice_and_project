@@ -1,0 +1,389 @@
+1. Make a program that ask for words and saves them in a file called words.txt (one word per line) until you write STOP.
+#!/usr/bin/python3
+import sys
+try:
+    outfile=open('word.txt','w')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+content=input('Please enter the content you want to write:\n Enter stop to stop writing ')
+ 
+while content!='stop':
+     outfile.write(content)
+     outfile.write('\n')
+     content=input('Please enter the content you want to write:\n Enter stop to stop writing ')
+
+outfile.close()
+
+2. Make a program that reads all the words in words.txt in an list. First the words must be sorted alphabetically, then the list should be reversed (the first line shall be the last and vice versa), finally the resulting list should be written back in words.txt.
+#!/usr/bin/python3
+import sys
+try:
+    infile=open('word.txt','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+content=''
+for line in infile:
+ if line != '':
+   content += line
+   line=''
+print(content)
+
+prime=list()
+prime=content.split(sep='\n')
+print(prime)
+prime.sort()
+print(prime)
+prime.reverse()
+print(prime)
+
+infile.close() 
+
+try:
+    outfile=open('word.txt','w')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+i=0
+while i<len(prime):
+   if prime[i]!='':
+     outfile.write(prime[i])
+   i += 1
+
+outfile.close()
+infile.close()
+
+3. In the file ex5.acc there are 6461 unique GenBank accession numbers (taken from HU6800 DNA array chip). An inexperienced bioinformatician unfortunately fouled up the list, so many of the accession numbers appears more than once. It is your job to clean the list, so all accession numbers only appear once, and in alphabetical order. Save the new list in clean.acc. Hint: After sorting a list, duplicates are "next" to each other, thereby making them easy to find and eliminate. You are NOT to use the pop method in this exercise. Make instead a new list with the unique elements.
+#!/usr/bin/python3
+import sys
+try:
+    infile=open('ex5.acc','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+
+content=''
+for line in infile:
+ if line != '':
+   content += line
+   line=''
+prime=list()
+prime=content.split(sep='\n')
+prime.sort()
+
+i=0
+newlist=list()
+while i<len(prime):
+    p = i+1
+    newlist.append(prime[i])
+    while p<len(prime):
+      if prime[p] == prime[i]:
+        del prime[p]
+        p = p-1
+      p += 1
+    i += 1
+
+print(newlist)
+
+try:
+    outfile=open('clean.acc','w')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+i=0
+while i<len(newlist):
+   if newlist[i]!='':
+     outfile.write(newlist[i])
+     outfile.write('\n')
+   i += 1
+
+outfile.close()
+infile.close()
+
+4. Improve/change the previous exercise by using the pop method to eliminate duplicates. HINT: Keep one list and pop duplicates out of it instead of appending them into a new list.
+#!/usr/bin/python3
+import sys
+try:
+    infile=open('ex5.acc','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+
+content=''
+for line in infile:
+ if line != '':
+   content += line
+   line=''
+prime=list()
+prime=content.split(sep='\n')
+prime.sort()
+
+i=0
+newlist=list()
+while i<len(prime):
+    p = i+1
+    newlist.append(prime[i])
+    while p<len(prime):
+      if prime[p] == prime[i]:
+        prime.pop(p)
+        p = p-1
+      p += 1
+    i += 1
+
+print(newlist)
+try:
+    outfile=open('clean.acc','w')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+i=0
+while i<len(newlist):
+   if newlist[i]!='':
+     outfile.write(newlist[i])
+     outfile.write('\n')
+   i += 1
+
+outfile.close()
+infile.close()
+
+
+
+
+
+5. Searching for accession numbers. Make a program that first reads your file clean.acc, and then asks for accession numbers and checks if they are in the list. If in the list the program should tell you, but it should also tell you if it is not in the list. The program should continue to ask until you write STOP. The search method you should employ is linear search; this is simply searching the list from one end to the other one accession number at a time. Linear search is always used when you don't know where the element you are searching for is placed in the list. In this exercise you can not use the in operator.
+#!/usr/bin/python3
+import sys
+try:
+    infile=open('clean.acc','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+
+content=''
+for line in infile:
+ if line != '':
+   content += line
+   line=''
+prime=list()
+prime=content.split(sep='\n')
+prime.sort()
+
+anum=str(input('Please enter the accession numbers you want to check:\n Enter stop to stop '))
+
+while anum !='stop':
+    flag=True
+    i=0
+    
+    while i<len(prime):
+      if anum == prime[i]:
+        flag=False
+      i += 1
+    if flag:
+        print('the accession number is NOT in the list')
+    else:
+        print('the accession number IS in the list')
+    anum=str(input('Please enter the content you want to write:\n Enter stop to stop writing '))
+
+infile.close()
+
+6. After having looked at the list in clean.acc, you discover that the accession numbers are sorted. This means that you can use the much more powerful binary search method. Repeat the previous exercise, but this time use binary search. See what Wikipedia has to say about binary search.
+#!/usr/bin/python3
+import sys
+try:
+    infile=open('clean.acc','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+
+content=''
+for line in infile:
+ if line != '':
+   content += line
+   line=''
+prime=list()
+prime=content.split(sep='\n')
+prime.sort()
+
+anum=str(input('Please enter the accession numbers you want to check:\n Enter stop to stop '))
+
+while anum!='stop':
+  flag=True
+  L=len(prime)-1
+  S=0
+  T=int((S+L)/2)
+  i=0
+  while S<L and anum!=prime[T]:
+    T=int((S+L)/2)
+    if anum<prime[T]:
+     L=T
+    elif anum>prime[T]:
+     S=T+1
+    elif anum==prime[T]:
+     flag=False
+     break
+         
+  if flag:
+     print('the accession number is NOT in the list')
+  else:
+     print('the accession number IS in the list')
+  anum=str(input('Please enter the content you want to write:\n Enter stop to stop writing '))
+
+infile.close()
+
+7. It is time to improve on some of your old programs by adding a command line interface (not replacing the interactive interface you already have). This simply means that you can write ProgramName <FileName> (or something like it) on the command line and your program should then use the argument that you have supplied on the command line (in this case: <FileName>). It should only ask for a filename (or whatever) if no argument was specified. Improve exercise 4.2 and 4.3.
+4.2
+Using nedit to create a file called numbers.lst with this content:
+3
+7
+Now the remake of the program
+
+#!/usr/bin/python3
+import sys
+
+if len(sys.argv)==1:
+  low = int(sys.stdin.readline())
+  high = int(sys.stdin.readline())
+  middle = int((high+low)/2)
+  print("The middle of", low, "and", high, "is",  middle)
+  
+if len(sys.argv)>1:
+  sum=0
+  try:
+    infile = open(sys.argv[1],'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+  i=0
+  for line in infile:
+    if line != ' ':
+     a = int(line)
+     i += 1
+     sum=sum+a
+  infile.close()
+  c=sum/i
+  print("The average is",  c)
+
+4.3
+#!/usr/bin/python3
+import sys
+if len(sys.argv)==1:
+  filename=input('please enter the file name you want to open:')
+  negatives = 0
+  infile = open(filename, 'r')
+  for line in infile:
+    for i in range(len(line)):
+        if line[i] == '-':
+            negatives += 1
+  infile.close()
+# Result
+  print("Count of negative numbers:", negatives)
+  
+if len(sys.argv)>1:
+  negatives = 0
+  try:
+    infile = open(sys.argv[1], 'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  
+  for line in infile:
+    for i in range(len(line)):
+        if line[i] == '-':
+            negatives += 1
+  infile.close()
+  print("Count of negative numbers:", negatives)
+
+
+8. You are expected to provide such an interface when relevant in future exercises
+Make a Python program that works a bit like unix cut. Test it before you start so you know how the output looks. It should cut out the columns that you specify in the order you specify on the command line from a tab-separated file. Some examples could be pythoncut.py 2 ex1.dat which cuts out column 2 from ex1.dat or pythoncut.py 3 1 ex1.dat which cuts out columns 3 and 1 from ex1.dat and displays them in that order (which is different from the original).
+#!/usr/bin/python3
+import sys
+try:
+    infile=open(sys.argv[-1],'r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+for line in infile:
+  prime=line.split()
+  i=1    
+  while i< len(sys.argv)-1:
+    number=int(sys.argv[i])
+    sys.stdout.write(prime[number-1]+'\t')      
+    i += 1
+  sys.stdout.write('\n')
+
+infile.close()
+
+9. Improve exercise 3.4. Calculate the three sums of the three columns in one reading of the file ex1.dat using split to separate the columns.
+#!/usr/bin/python3
+import sys
+
+thesum = 0.0
+count = 0
+
+try:
+    infile=open('ex1.dat','r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+sum1,sum2,sum3=0,0,0    
+for line in infile:
+  prime=line.split()
+  i=0
+  sum1 += float(prime[0])
+  sum2 += float(prime[1])  
+  sum3 += float(prime[2])   
+  count += 1
+if count == 0:
+    print("Empty file.")
+else:
+    print("The sums of the colume are:", sum1, sum2, sum3)
+
+10. Improve on the previous exercise by making a program that calculates the sum of all columns in the file, no matter how many columns there are. Each column should be summed individually. You can assume that each row (line) has the same number of columns in the file.
+#!/usr/bin/python3
+import sys
+
+thesum = 0.0
+count = 0
+filename=input('please enter the file name:')
+try:
+    infile=open(filename,'r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1) 
+sum=list()
+for line in infile:
+  count += 1
+  prime=line
+  if count == 1:
+    prime=prime.split()
+    sum=prime
+    i=0
+    while i<len(sum):
+     sum[i]=float(prime[i])
+     i += 1
+  if count != 1:
+    prime=prime.split()
+    i=0
+    while i<len(prime):
+      sum[i] += float(prime[i])
+      i += 1  
+if count == 0:
+    print("Empty file.")
+else:
+    print("The sums of the colume are:", sum)
+
+infile.close()
+
+
+

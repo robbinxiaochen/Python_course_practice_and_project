@@ -1,0 +1,225 @@
+1. During your research in ion channels you stumble upon the SwissProt entry (CIQ3_HUMAN) in appendix 1. You notice in the feature table (FT) that several variants and mutations of this gene exists. You want to take a closer look at this and decide that the first step is to extract the original amino acid sequence and all variations (full sequence with the appropiate amino acid changed) hereoff and put the result in a fasta file. Do not consider combinations. Since you probably are going to do this on a lot of SwissProt entries, you decide to make a program in python.
+a) Describe which keywords/patterns you will be looking for when parsing the file searching for the variants/mutations and the sequence.
+    if line.startswith('FT') and 'VARIANT' in line: re.search(r'\w{3,}_[A-Z]{4,}',line) to search the variant position, re.search(r'[A-Z]{1}.+\>.[A-Z]{1}',line) to search the variant
+    if line.startswith('FT') and 'MUTAGEN' in line: re.search(r'\w{3,}_[A-Z]{4,}',line) to search the mutagen position,re.search(r'[A-Z]{1}-\>[A-Z]{1}',line) to search the variant
+    sq=re.findall('[A-Z]+',line) to search for the sequence
+ 
+b) Describe a method to extract the sequence and variations/mutants and print all the different full sequences in fasta. You can use pseudo code, a diagram or whatever you find suitable in your description.
+pseudo code
+for line in file:
+  get the ID
+  if line.startswith('FT') and 'VARIANT' or 'MUTAGEN' in line: 
+     search the variant/mutagen position
+     search the variant/mutagen
+     save variant position as the key, the variant as value in to a dict
+  if flag is Ture:
+    get all the sequence
+  
+change the sequence according to the variant dict
+write the new sequence into a fasta file
+
+c) Implement your method in python.
+#!/usr/bin/python3
+
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+mupos,mut,vapos,va,ID=None,None,None,None,None
+seq=''
+variant=dict()
+flag = False
+
+for line in infile:
+  if line.startswith('ID'):
+    ID = re.search(r'\w{3,}_[A-Z]{4,}',line)
+  
+  if line.startswith('FT') and 'VARIANT' in line: 
+    vapos = re.search(r'\b\d+\b',line)
+    vat = re.search(r'[A-Z]{1}.+\>.[A-Z]{1}',line)  #W -> R
+    if vapos.group() not in variant: 
+      variant[vapos.group()] = vat.group()
+    vapos,vat = None,None
+    
+  if line.startswith('FT') and 'MUTAGEN' in line:
+    mupos = re.search(r'\b\d+\b',line)
+    mu = re.search(r'[A-Z]{1}-\>[A-Z]{1}',line)  #G->V
+    if  mupos.group() not in variant: 
+      variant[mupos.group()] = mu.group()
+    mupos,mu = None,None
+  
+     # Extract the DNA  
+  if line.startswith('//'):
+    flag = False
+  if flag:
+    sq=re.findall('[A-Z]+',line)    
+    seq += ''. join(sq)
+  if line.startswith('SQ'):
+    flag = True
+  
+#change the sequence
+newseq = ''
+for i in range(0,len(seq)):
+  if str(i+1) in variant:
+    newseq += variant[str(i+1)][-1]
+  else:
+    newseq += seq[i]
+
+try:
+  outfile = open('newseq.fas','w')
+  outfile.write('>'+ ID.group()+'\n')
+  for i in range(0, len(newseq), 60):
+    outfile.write(newseq[i:i+60] + '\n')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1) 
+d) What kind of error checking could/should you include in your program ? Here you should name every check, which is relevant to the task, not every check it is possible to make.
+when open a file, check in/output error IOError
+when handling the sequence, check the index not out of range IndexError
+
+
+e) In what way could you generalize or extend the program ?
+Instead just open 'appendix1.txt', the program can also handle other files. 
+the beginnig of the code to get the file name can be like this£º
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+
+
+
+
+
+
+
+
+
+
+2. You have earlier in your career made a splendid program, that calculate various scores based on amino acid sequence features. The output from your program can be seen in appendix 3, and consist of an accession number followed by 6 numbers between 0 and 1 per line (tab separated). You want to find the accession numbers with the highest and lowest average scores (average of the 6 numbers). However, you want to exclude any genes on your negative list from your calculations. These genes are listed as SwissProt IDs in appendix 4. Since GenBank accession numbers and SwissProt IDs are not identical, you need to translate between them in order to solve your problem. Fortunately you have a file, that does just that, see appendix 5, where the first item on the line is a SwissProt ID, second item is irrelevant, and third is the corresponding GenBank accession number.
+a) Describe a method to find the data. You can use pseudo code, a diagram or whatever you find suitable in your description.
+Pseudocode:
+open files
+for line in appendix3:
+    split line
+    save data as a list
+for line in appendix4:
+    get the SwissProt ID
+    save SwissProt ID into a list
+for line in appendix5:
+    split the line into a list
+    if the list[0] in IDlist, save it with the accession number as a tranlation dict
+
+close files
+detete the accession numbers in tranlation dict from the data list get from appendix3
+caculate the average for each accession number and find the highest and lowest ones
+ 
+b) Implement your method in python.
+#!/usr/bin/python3
+
+import sys
+import re
+
+try:
+  infile1 = open('appendix3.txt','r')
+  infile2 = open('appendix4.txt','r')
+  infile3 = open('appendix5.txt','r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+ 
+data = list() 
+for line in infile1:
+  data.append(line[:-1].split())
+
+ID = list()  
+for line in infile2:
+  ID.append(line[:-1])
+
+#tanslate the ID to accession number  
+translation = dict()
+for line in infile3:
+  trans = line[:-1].split()
+  if trans[0] in ID:
+    translation[trans[-1]] = trans[0]
+
+infile1.close()
+infile2.close()
+infile3.close()
+
+#Delete the nagative list
+newdata = list()
+for i in range(0,len(data)):
+  if data[i][0] in translation:
+    pass
+  else:
+    newdata.append(data[i])
+    
+#caculate the average
+avar = dict()
+for i in range(0,len(newdata)):
+  sum = 0
+  for j in range(1,len(newdata[i])):
+    sum += float(newdata[i][j])
+  
+  avar[sum/(len(newdata[i])-1)] = newdata[i][0]
+
+# get the highest and lowest scores
+keylist = list(avar.keys())
+keylist.sort()
+print('the accession number with the lowest average scores is:', avar[keylist[0]], ':', keylist[0])
+print('the accession number with the highest average scores is:', avar[keylist[-1]],':', keylist[-1] )
+
+c) Have you made any assumptions about the data in your algoritm ? Which ? Why ? Are they reasonable assumptions (explain) ? Could/should you do away with them (by changing the code) ?
+Yes, I assume all the data is existing and not blank. 
+I think it is resonalbe, casue there are several reasons, the data coould miss. So there is no need to delete them.
+If want to check if the data is blank and delete the blank ones.
+when caculat the average, the code can be changed as:
+
+avar = dict()
+for i in range(0,len(newdata)):
+  sum = 0
+  for j in range(1,len(newdata[i])):
+    if newdata[i][j] is not '':
+      sum += float(newdata[i][j])
+    else:
+      newdata[i][j] = 0
+  newdata[i].pop(0)
+  avar[sum/(len(newdata[i])-1)] = newdata[i][0]
+
+d) Usually, when you have this kind of problem, you want the highest 10 and lowest 10 average scores, not just the top and buttom average score. How would you solve this problem ? Will it change any assumptions i c) ?
+It will not change the assumptions in c)
+To get the highest 10 and lowest 10 average scores, the last part of the code can be changed as
+# get the highest and lowest scores
+keylist = list(avar.keys())
+keylist.sort()
+for i in range(0,10):
+  print('the accession number with the lowest 10 average scores are:')
+  print( avar[keylist[i], ':', keylist[i])
+
+keylist.reverse()
+for i in range(0,10):
+  print('the accession number with the highest average scores are:')
+  print( avar[keylist[i], ':', keylist[i])
+
+
+
+
+
+

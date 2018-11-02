@@ -1,0 +1,384 @@
+1.Make a program that accepts any input. Use regular expressions (RE) to determine if the input is a number. 
+These should all be considered as numbers: "4"   "-7"   "0.656"   "-67.35555" 
+These are not numbers: "5."  "56F"  ".32"  "-.04"  "1+1"
+Note: This is likely the most difficult regular expression, you will have to make in this set of exercises. Perhaps you should do this later.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  st=input('Please enter the content: ')
+  
+if len(sys.argv)>1:
+  st=sys.argv[1]
+regs = None
+regs = re.search(r'^-?\d+(\.\d+)?$',st)
+if regs is None:
+  print('this is NOT a number')
+
+else:
+  print('this IS a number')
+
+2.Improve exercise 5.6 by using regular expressions to find the ID, accession number and amino acid sequence. Note: This exercise also covers verification and printing of fasta file.
+#!/usr/bin/python3
+import sys
+import re
+try:
+    infile = open('sprot1.dat', 'r')
+except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+sp_id = None
+accno = None
+seqlen=None
+aminoseq = ''
+flag = False
+for line in infile:
+    identifier = line
+    # Getting the ID
+    if identifier.startswith('ID'):
+        sp_id = re.search(r'\s\w+\s',identifier)
+    # Getting accession
+    if identifier.startswith('AC'):        
+        # extract AC from the line        
+        accno = re.search(r'\s\w+\b',identifier)
+    # Getting sequence
+    if identifier.startswith('//'):
+        flag = False
+    if flag:
+        sq=re.findall('[A-Z]+',identifier)
+        
+        aminoseq += ''. join(sq)
+    if identifier.startswith('SQ'):
+        flag = True
+        # extract SEQ LENGTH from the SQ line
+        seqlen = re.search(r'\s\d+\s\b',identifier)
+infile.close()
+
+print(sp_id.group(),accno.group(),seqlen.group(),'\n',aminoseq)
+# Various situation which are errors, defining our own errors
+try:
+    if flag:
+        raise ValueError("Sequence did not end correctly")
+    if aminoseq == '':
+        raise ValueError("Could not find sequence")
+    if int(seqlen.group()) != len(aminoseq):
+        raise ValueError("Reported length of sequence does not match actual length")
+except ValueError as error:
+    sys.stderr.write(str(error) + "\n")
+    sys.exit(1)
+# Output
+try:
+    outfile = open('sprot.fsa', 'w')
+except IOError as error:
+    sys.stdout.write("Can't write file, reason: " + str(error) + "\n")
+    sys.exit(1)
+outfile.write(">" + sp_id.group() + " Accession no: " + accno.group() + " Length: " + str(len(aminoseq)) + " AA \n")
+for i in range(0,len(aminoseq),60):
+    outfile.write(aminoseq[i:i+60] + "\n") 
+outfile.close()
+
+3.Improve exercise 4.10 using all you have learned. The program shall now take a DNA FASTA file (getting the file name from command line or asking interactively for it, both methods shall work), and reverse and complement all entries in the file. There can be more than one entry, study dna7.fsa. Hint: Use substitution or translation for complementing the DNA. Regular expressions are not strictly needed for anything than verifying that it is proper sequence.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+headline =list()
+dna = list()
+flag = False
+sequence=''
+
+# Skip the fisr line
+line = infile.readline()
+headline.append(line[:-1] + " ReversedComplementStrand\n" )
+flag=True
+for line in infile:
+   flag = True
+   if line.startswith('>'):
+     flag = False
+     headline.append(line[:-1] + " ReversedComplementStrand\n" )
+     dna.append(sequence)
+     sequence=''
+   if flag: 
+     sq=re.findall('[A-Z]+',line)        
+     sequence += ''. join(sq)
+dna.append(sequence)
+infile.close()
+
+# After the data is read, now complement and reverse
+i = 0
+reversecomplementdna = list()
+while i < len(dna):
+  revdna=dna[i][::-1]
+  translationTable = revdna.maketrans('ATCG','TAGC')
+  complementdna = revdna.translate(translationTable)
+  reversecomplementdna.append(complementdna)
+  i += 1
+
+# Output sequence
+filehandle = open('revdna.fsa', 'w')
+i=0  
+while i < len (headline):
+  filehandle.write(headline[i])
+  for count in range(0,len(reversecomplementdna[i]),60):
+    filehandle.write(reversecomplementdna[i][count:count+60] + "\n")
+  i += 1
+handlefile.close()
+
+4.The last exercises will all have to do with the files data1-4.gb, which are various Genbank entries of genes. First you should study the files, notice the structure of the data. In all exercises you will have to parse (read and find the wanted data) the files using RE's which are very well designed for that purpose. Every exercise adds to the previous ones, so the final program can do a lot. Remember. Your program should be able to handle all files, but just one at a time.
+5.Extract the accession number, the definition and the organism (and print it).
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+accno,defini,organ=None,None,None
+for line in infile:
+   identifier = line
+   if identifier.startswith('ACCESSION'):        
+     # extract AC from the line        
+     accno = re.search(r'\s[A-Z]+\d+',identifier)
+   
+   if identifier.startswith('DEFINITION'): 
+     # extract definition from the line        
+     defini = re.search(r'\s.*,',identifier)  
+
+   if 'ORGANISM' in identifier: 
+     # extract organism from the line        
+     organ = re.search(r'[A-Z]+[a-z]+.*',identifier)
+
+print('the accession number is:',accno.group(),'\nthe definition is: ',defini.group(),'\nthe organism is:',organ.group())
+
+6.Extract and print all MEDLINE article numbers which are mentioned in the entries.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+accno,defini,organ,object=None,None,None,None
+medline=list()
+
+for line in infile:
+   identifier = line
+   if identifier.startswith('ACCESSION'):        
+     # extract AC from the line        
+     accno = re.search(r'\s[A-Z]+\d+',identifier)
+   
+   if identifier.startswith('DEFINITION'): 
+     # extract definition from the line        
+     defini = re.search(r'\s.*,',identifier)  
+
+   if 'ORGANISM' in identifier: 
+     # extract organism from the line        
+     organ = re.search(r'[A-Z]+[a-z]+.*',identifier) 
+     
+   if 'MEDLINE' in line:
+     # extract MEDLINE article numbers
+     object = re.search(r'\b\d+',identifier)
+     medline.append(object.group())
+print('the accession number is:',accno.group(),'\nthe definition is: ',defini.group(),'\nthe organism is:',organ.group())
+print('the medline numbers are:',medline)
+
+7.Extract and print the translated gene (the amino acid sequence). Look for the line starting with /translation=. Generalize; An amino acid sequence can be short, i.e. only one line in the feature table, or long, i.e. more than one line in the feature table.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+accno,defini,organ,object,asq=None,None,None,None,None
+medline=list()
+aminoseq = ''
+flag1 = False
+
+for line in infile:
+   identifier = line
+   if identifier.startswith('ACCESSION'):        
+     # extract AC from the line        
+     accno = re.search(r'\s[A-Z]+\d+',identifier)
+   
+   if identifier.startswith('DEFINITION'): 
+     # extract definition from the line        
+     defini = re.search(r'\s.*,',identifier)  
+
+   if 'ORGANISM' in identifier: 
+     # extract organism from the line        
+     organ = re.search(r'[A-Z]+[a-z]+.*',identifier) 
+     
+   if 'MEDLINE' in line:
+     # extract MEDLINE article numbers
+     object = re.search(r'\b\d+',identifier)
+     medline.append(object.group())
+   
+    # extract the translated genes
+   if '/translation="' in line:
+     flag1 = True 
+   if flag1:
+     asq=re.findall('[A-Z]+',identifier)        
+     aminoseq += ''. join(asq)      
+   if line[-2] == '"':
+     flag1 = False
+     
+print('the accession number is:',accno.group(),'\nthe definition is: ',defini.group(),'\nthe organism is:',organ.group())
+print('the medline numbers are:',medline)
+print('the translated gene sequence is:', aminoseq)
+
+8.Extract and print the DNA (whole base sequence in the end of the file).
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+accno,defini,organ,object,asq,sq=None,None,None,None,None,None
+medline=list()
+aminoseq,dna= '',''
+flag1,flag2 = False,False
+
+
+for line in infile:
+   identifier = line
+   if identifier.startswith('ACCESSION'):        
+     # extract AC from the line        
+     accno = re.search(r'\s[A-Z]+\d+',identifier)
+   
+   if identifier.startswith('DEFINITION'): 
+     # extract definition from the line        
+     defini = re.search(r'\s.*,',identifier)  
+
+   if 'ORGANISM' in identifier: 
+     # extract organism from the line        
+     organ = re.search(r'[A-Z]+[a-z]+.*',identifier) 
+     
+   if 'MEDLINE' in line:
+     # extract MEDLINE article numbers
+     object = re.search(r'\b\d+',identifier)
+     medline.append(object.group())
+   
+    # extract the translated genes
+   if '/translation="' in line:
+     flag1 = True 
+   if flag1:
+     asq=re.findall('[A-Z]+',identifier)        
+     aminoseq += ''. join(asq)      
+   if line[-2] == '"':
+     flag1 = False
+     
+      # Extract the DNA  
+   if identifier.startswith('//'):
+     flag2 = False
+   if flag2:
+     sq=re.findall('[a-z]+',identifier)    
+     dna += ''. join(sq)
+   if identifier.startswith('ORIGIN'):
+     flag2 = True
+     
+print('the accession number is:',accno.group(),'\nthe definition is: ',defini.group(),'\nthe organism is:',organ.group())
+print('the medline numbers are:',medline)
+print('the translated gene sequence is:', aminoseq)
+print('the DNA sequense is: ',dna)
+
+9.Extract and print ONLY the coding DNA. That is described in FEATURES - CDS (Coding DNA Sequence). As an example, the line in data1.gb says 'join(2424..2610,3397..3542)' and means that the coding sequence are bases 2424-2610 followed by bases 3397-3542. The bases in between are an intron and not a part of the coding DNA. Remember to generalize; there can be more (or less) than two exons, and the 'join' line can continue on the next line.
+#!/usr/bin/python3
+import sys
+import re
+
+if len(sys.argv)==1:
+  filename=input('Please enter the file name you want to open: ')
+  
+if len(sys.argv)>1:
+  filename=sys.argv[1]
+try:
+  infile = open(filename,'r')
+except IOError as error:
+  sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+  sys.exit(1)
+
+accno,defini,organ,object,asqobject,sq=None,None,None,None,None,None
+trans=None
+
+flag1,flag2,flag3= False,False,False
+
+medline=list()
+dna,aminoseq='',''
+cdna=list()
+
+for line in infile:
+   identifier = line
+  
+     # Extract the DNA  
+   if identifier.startswith('//'):
+     flag2 = False
+   if flag2:
+     sq=re.findall('[a-z]+',identifier)    
+     dna += ''. join(sq)
+   if identifier.startswith('ORIGIN'):
+     flag2 = True
+     
+   # Extract the coding DNA position.
+   if  '/' in line:
+     flag3 = False 
+   if flag3:
+     cdna += re.findall('\d{2,}',line)
+   if 'CDS' in line:
+     flag3 = True 
+     cdna += re.findall('\d{2,}',line)
+infile.close()
+# print the coding DNA
+i=0
+j=0
+print('the  coding DNA sequence is:'),
+for i in range(0,len(cdna),2):
+  for j in range(int(cdna[i]),int(cdna[i+1])+1):
+    print(dna[j-1],end='')
+  

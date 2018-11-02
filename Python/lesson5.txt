@@ -1,0 +1,264 @@
+1. This and the following 5 exercises deal with SwissProt. The file sprot1.dat is a SwissProt database entry. Study it carefully. Locate the SwissProt ID (SP96_DICDI), the accession number (P14328) and the amino acid sequence (MRVLLVLVAC....TTTATTTATS). There are other entries ( sprot2.dat, sprot3.dat, sprot4.dat). Your programs should work on those, too. Also your programs must solve all the problems in ONE reading of the file. It is acceptable if you just hand in one program that solves 2 to 5. 6 is separate.
+2. Make a program that reads the ID and prints it.
+3. Add the following functionality to the program: Read the accession number and print it.
+4.Add the following functionality to the program: Read the amino acid sequence and print it.
+5.Add the following functionality to the program: Verification of amino acid number. This means extract the number from the SQ line (example: SQ SEQUENCE 629 AA;) and check that the amino acid sequence has that number of residues. It should be the program that determines if something is wrong - not the user. Imagine that before you go home, you set the computer to run through ? million swisprot entries. The next day, you must be able to see what failed. In a sense you don't care about what succedeed, as that is the common case. You care about what failed, because it is here you must take action.
+1-5
+#!/usr/bin/python3 
+
+filename=str(input('please enter the filename: '))
+infile=open(filename,'r')
+a=0
+for line in infile:    
+    if line[0:2]=='ID':
+      output=''
+      i=2
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ' ':
+        output += line[i]
+        i += 1
+      print('the ID is: ', output)  
+     
+    if line[0:2]=='AC':
+      output=''
+      i=2
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ' ':
+        output += line[i]
+        i += 1
+      print('the accession number is: ', output) 
+   
+    if line[0:2]=='SQ':
+      output=''
+      i=2
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ' ':
+        i += 1 
+      spacepos2=i    
+      while i>=spacepos2 and i<len(line) and line[i] == ' ':
+        i += 1
+      spacepos3=i
+      while i>=spacepos3 and i<len(line) and line[i] != ' ':
+        output += line[i]
+        i += 1
+      output=int(output)
+      print('the bases number is:', output, 'AA')
+      
+    if line[0:2]=='  ':
+        print(line)
+        for l in range(0,len(line)-1):
+           if line[l]!=' ':
+              a += 1
+print('there are', a, 'bases in this sequence')
+
+if a == output:
+  print('amino acid number Verified')
+else:
+  print('amino acid number not Verified')
+         
+infile.close()
+
+6. Now that you have the ID, accession number and AA sequence save it to a file sprot.fsa in FASTA format. Look in the file dna.fsa for an example of FASTA. Notice the first line starts with > and immediately after comes an unique identifier, like an accession number or a SwissProt ID. Any other data must be on the header line only, but in free format. Sequence data is on the following lines.
+Notice that this exercise incorporates the previous 5, but uses the result in a slightly different way.
+#!/usr/bin/python3 
+
+filename=str(input('please enter the filename: '))
+infile = open(filename,'r')
+outfile = open('sprot.fsa','w')
+outfile.write('>'), 
+                                  
+for line in infile:   
+    if line[0:2]=='ID':
+      output='' 
+      i=2
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ' ':
+        output += line[i]
+        i += 1 
+      outfile.write(output),
+      outfile.write('\t'),
+      
+    if line[0:2]=='AC':
+      i=2
+      output = ''
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ';':
+        output += line[i]
+        i += 1
+      outfile.write(output),
+      outfile.write('\t'),
+      
+    if line[0:2]=='SQ':
+      output = ''
+      i=2
+      while i<len(line) and line[i] == ' ':              
+        i += 1 
+      spacepos1=i
+      while i>=spacepos1 and i<len(line) and line[i] != ' ':
+        i += 1 
+      spacepos2=i    
+      while i>=spacepos2 and i<len(line) and line[i] == ' ':
+        i += 1
+      spacepos3=i
+      while i>=spacepos3 and i<len(line) and line[i] != ' ':
+        output += line[i]
+        i += 1
+      outfile.write(output),
+      outfile.write('AA\n')
+      
+    if line[0:2]=='  ':
+      i=0
+      output=''
+      while i<len(line): 
+        if line[i]!=' ':             
+          output += line[i]
+        i += 1
+      outfile.write(output)
+      
+outfile.close()         
+infile.close()
+
+
+7. In the file dna.fsa is some DNA. Construct a program that finds possible translation starts :-)
+All proteins start with the amino acid methionine (at least when translating, Met might be removed in later processing states). Methionine is coded with ATG. The exercise is therefore; find the position of all ATG's in the sequence. The first position is 83 as humans count.
+In some organisms different start codon are possible. If you really want to, you can make the program handle those cases too.
+#!/usr/bin/python3 
+
+infile = open('dna.fsa','r')
+sequence=''
+i=0
+¡®¡¯¡®for line in infile:
+   i += 1
+   if i!=1:
+     sequence += line
+
+
+''' line = 'dummy'
+    while len(line) > 0 and line[0] != '>':
+        line = infile.readline()
+    dnaseq = ''
+    for line in infile:
+       dnaseq += line[:-1]
+
+i=0
+while i<len(sequence):
+   if sequence[i] == 'A':
+     t=i+1
+     if sequence[t] == 'T':
+       g=t+1
+       if sequence[g] == 'G':
+         print('the ATG codon position is: ', i)
+   i += 1
+         
+infile.close()
+
+8. Assuming that the first Met at position 83 is translation start, find the corresponding translation stop (which is the first one in frame). Stop codon is coded by TAA, TAG, or TGA. Remember that the stop codon has to be in the same reading frame as ATG. Notice: There are two ways to solving this exercise. The primitive way is to start at the position given. The more general and better way is to find the first ATG and then find the corresponding stop codon. See here for explanation
+#!/usr/bin/python3 
+
+infile = open('dna.fsa','r')
+sequence=''
+i=0
+for line in infile:
+   i += 1
+   if i!=1:
+     sequence += line
+
+i=0
+while i<len(sequence):
+   if sequence[i] == 'A':
+     t=i+1
+     if sequence[t] == 'T':
+       g=t+1
+       if sequence[g] == 'G':
+         print('the ATG codon position is: ', i)
+         
+         stop=g+1
+         while stop<len(sequence):
+           if sequence[stop] == 'T':        #TAA
+               a=stop+1
+               if sequence[a] == 'A':
+                  a=a+1
+                  if sequence[a] == 'A':
+                    print('the TAA stop codon position is: ', stop)
+           elif sequence[stop] == 'T':        #TAG
+               a=stop+1
+               if sequence[a] == 'A':
+                  g=a+1
+                  if sequence[g] == 'G':
+                    print('the TAG stop codon position is: ', stop)
+           elif sequence[stop] == 'T':        #TGA
+               g=stop+1
+               if sequence[g] == 'G':
+                  a=g+1
+                  if sequence[a] == 'A':
+                    print('the TAG stop codon position is: ', stop)
+           stop += 1
+                            
+   i += 1
+         
+infile.close()
+
+9. Make a program that asks for an organism, like 'HUMAN' or 'RAT'. The program should then count the number of lines/times a SwissProt identifier in the file orphans.sp is present with said organism, ie. PARG_HUMAN and LUM_HUMAN are the two first (but not last) for HUMAN.
+#!/usr/bin/python3 
+
+infile = open('orphans.sp','r')
+human=0
+rat=0
+mouse=0
+for line in infile:
+   i=0
+   while i<len(line) and line[i] != '_':
+     i += 1
+   pos=i
+   if line[pos+1:pos+6]=='HUMAN':
+     human += 1
+   if line[pos+1:pos+4]=='RAT':
+     rat += 1
+   if line[pos+1:pos+6]=='MOUSE':
+     mouse += 1
+
+print('There are', human, ' human SwissProt identifier in this file')
+print('There are', rat, ' rat SwissProt identifier in this file')
+print('There are', mouse, ' mouse SwissProt identifier in this file')         
+infile.close()
+
+10. Playing time a again. Make the guessing program from last week count how many attempts it needed to guess the number and print it when done guessing. It must be able to detect if you lie (and say so, of course). Also, if you haven't done it before, make the program guess in the fewest possible guesses (binary search for you experts out there).
+#!/usr/bin/python3 
+
+low = 1
+high = 10
+print("Think of a number between", low, "and", high, "(both inclusive)")
+answer = input("Press <Enter> when you are ready ")
+guess = int((low+high)/2)
+# Guess loop
+i=0
+flag = True
+while answer != 'yes':
+    answer = input("Is it " + str(guess) +" ?? Answer yes, higher or lower ")
+    if answer == 'lower':
+        guess -= 1
+    if answer == 'higher':
+        guess += 1
+    # Infer answer in the extremes
+    if guess > high or guess < low:
+        flag = False
+        break
+    i += 1
+
+if flag: 
+   print("I guessed it. It is", guess,'I have gussed ', i, 'times')
+else:
+    print('You have lied')
+
+
+

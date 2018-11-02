@@ -1,0 +1,152 @@
+1. in the file test1.dat is results from an experiment in the form
+AccessionNumber   Number Number Number ....
+.
+.
+In the files test2.dat and test3.dat are results from similar experiments but with a slightly different gene set. You want to average the numbers from all experiments for each acccession number. The output this therefore.
+AccessionNumber SingleAverageNumberOfAll3Experiments
+.
+.
+Of course it might happen that a certain gene is only in one or two experiments and in that case you calculate the average for those. You must use a one of complex data structures to store this data, preferably a dict of lists.
+OPTIONAL: If you have time and inclination, then you can also solve this using simple one-dimensionel structures.
+
+# High level pseudo code, description
+read the file and use a dict of list to keep track of every time an accession and experiment datas are seen
+caculate the average of every key
+# Detailed pseudo code, using code elements
+for each line in file
+   split line into a list
+   get first element accession number as the key of the dictoinary
+   if accession is in the dict
+       increment the value for the accession with the rest of the line(list)
+   else
+       put accession in dict with value which is the rest of the line
+
+caculate the avreage of every key and write them into a new file
+for priKey in dict
+  record the priKey
+  calculate the average using sum(list)/len(list)
+  record the average
+#!/usr/bin/python3
+import sys
+import re
+
+def readfile(filename):
+  """ Reads a file and returns a dict of list with the accession as keys and list of datas as value."""
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  dictname=dict()
+  for line in infile:
+    key = re.search(r'[A-Z]\d+',line)
+    data = re.findall('\d+\.\d+',line)
+    if key.group() in dictname:      
+      dictname[key.group()].append(data)
+    if key.group() not in dictname:
+      dictname[key.group()] = data
+
+  return dictname
+  
+def average(list1):
+  '''caculate the average of a list'''
+  sum = 0.0
+  for i in range(0,len(list1)):
+    sum += float(list1[i])
+  average = sum/len(list1)
+  return average
+
+def output(dict1,filename):
+  '''write a dict into a new file as fileneme'''
+  outfile = open(filename,'w')
+  list1=list(dict1.keys())
+  list1.sort()
+  for priKey in list1:
+    outfile.write(priKey + ' ' + str(dict1[priKey])+'\n')
+  return
+  
+#main program
+if len(sys.argv)==1:
+    print("Please enter one file name you want to open, press enter to continue to open another file, or 'stop' to stop")
+    content=input('Please enter the file name you want to open: ')
+    filename = list()
+    while content != 'stop':
+      filename.append(content)
+      content=input('Please enter the file name you want to open: ')
+      
+if len(sys.argv)>1:
+    filename=sys.argv[1::]
+    
+
+experiment = dict()
+for i in range(0,len(filename)):
+  testdata = readfile(filename[i])
+  experiment.update(testdata)
+  
+list1=list(experiment.keys())
+list1.sort()
+  
+#a new dict to record the result
+result = dict()
+for key in list1: 
+  result[key] = average(experiment[key])
+
+output(result,'result.dat')
+
+2. Create a program that reads a tab separated file with numbers, matrix.dat, (to be understood as a matrix) and stores the numbers in a matrix (list of lists). Having read the matrix from file it should now transpose it (rows to columns and columns to rows) and in the end print the transposed matrix to the screen. The output should look like the input, not a python data structure.
+You must construct a function like transpose(matrix), which transpose the matix without using any global variables. This can be done in two ways.
+1) matrix = transpose(matrix)
+This is the easiest, but momentarily most memory consuming method, you just return the transposed matrix.
+2) transpose(matrix)
+Here the matrix is transposed inline, no returned matrix. 
+You have implement at least one of the two ways. 
+Hint: Make a function that prints a given matrix. That will be useful underway. How do you easily check if it works? Well, transposing twice yields the original matrix. Check out Wikipedia's entry on transposing a matrix.
+
+#!/usr/bin/python3
+import sys
+import re
+import copy
+
+def readfile():
+  """ Reads a file and returns a dict of matrix with numbers as key and datas as value."""
+  if len(sys.argv)==1:
+    filename=input('Please enter the file name you want to open: ')
+  if len(sys.argv)>1:
+    filename=sys.argv[1]
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  matrix=list()
+  for line in infile:
+    data = re.findall('\d+',line)
+    matrix.append(data)
+  return matrix
+  
+def printmatrix(matrix):
+  '''print a matrix'''
+  for i in range(0,len(matrix)):
+    for j in range(0,len(matrix[i])):
+      print(matrix[i][j],end=' ')
+    print('\n')
+
+def transpose(matrix):
+  '''transpose a matrix and return the transposed matrix'''
+  transmatrix = list()
+  for i in range(0,len(matrix)):
+    for number in enumerate(matrix[i]):
+      if i == 0:
+        transmatrix.append([number[1]])
+      else:
+        transmatrix[number[0]].append(number[1])
+  return transmatrix
+
+      
+#main program
+matrix = readfile()
+print("the matrix is: ")
+printmatrix( matrix)
+transmatrix = transpose(matrix)
+print("the transposed matrix is: ")
+printmatrix(transmatrix)

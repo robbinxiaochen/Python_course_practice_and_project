@@ -1,0 +1,175 @@
+1. Make a program that calculates the product of two matrices and prints it on STDOUT (the screen). The matrices are in the files mat1.dat and mat2.dat. Numbers in the files are tab separated. A matrix should be stored as an list of lists.
+Advice: The program should have a function that reads a matrix from a given file (to be used twice), a function that calculates the product, and a function that prints a matrix. This way ensures that your program is easy to change to other forms of matrix calculations. Here are two links to the definition of matrix multiplication.
+
+
+# High level pseudo code, description
+make a function which can read the file and use a list of lists to keep track of matrix
+make a function casulating the product of 2 matrixes
+make a function printing a matrix to print the product
+
+# Detailed pseudo code, using code elements
+for each line in file
+   split line into a list and append it to a list
+retrun the list of lists
+
+for i in length of matrix1:
+  for j in row lenghth of matrix2:
+      caculate the sume of: matirx1[i][j]*matrix2[j][i]
+      append the sum to a new list
+
+print the matrixes
+
+#!/usr/bin/python3 
+import sys
+import re
+
+def readfile(filename):
+  """ Reads a file and returns a dict of list with the accession as keys and list of datas as value."""
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  matrix=list()
+  for line in infile:
+    data = re.findall('\d+',line)
+    matrix.append(data)
+  return matrix
+  
+def printmatrix(matrix):
+  '''print a matrix'''
+  for i in range(0,len(matrix)):
+    for j in range(0,len(matrix[i])):
+      print(matrix[i][j],end=' ')
+    print('\n')
+
+def product(matrix1, matrix2):
+  '''caculate the product of 2 matrixes, and return the resullt'''
+  #create a new list of lists of which the lengh equals to the lengh of first matrix
+  product = list()
+  for i in range(0,len(matrix1[0])):
+    product.append([])
+  
+  #caculate the product
+  sum = 0
+  for i in range(0,len(matrix1)):
+    for j in range(0,len(matrix2[0])):
+      for number in enumerate(matrix1[i]):
+        sum += float(number[1]) * float(matrix2[number[0]][j])
+      product[i].append(sum)
+      sum = 0  
+  return product
+  
+#main program
+#main program
+if len(sys.argv)==1:
+    print("Please enter one file name you want to open, press enter to continue to open another file, or 'stop' to stop")
+    content=input('Please enter the file name you want to open: ')
+    filename = list()
+    while content != 'stop':
+      filename.append(content)
+      content=input('Please enter the file name you want to open: ')
+
+if len(sys.argv)>1:
+    filename=sys.argv[1::]
+
+matrix1 = readfile(filename[0])
+matrix2 = readfile(filename[1])
+
+productmatrix = product(matrix1, matrix2)
+
+print('The first matrix is:')
+printmatrix(matrix1)
+print('The second matrix is:')
+printmatrix(matrix2)
+print('The product matrix is:')
+printmatrix(productmatrix)
+
+2. Study the file dna-array.dat a bit. This is real DNA array data taken from a number of persons, some controls and some suffering from colon cancer. If you look at the second line there is a lot of 0 and 1. A '0' means that values in that column are from a cancer patient and a '1' means data are from a control (healty person). The data are all log(intensity), i.e. the logarithm of the mesured intensity of the relevant spot on the dna-chip. The data in this file will be used in comming exercises. Oh, yes - the data/columns are tab separated. The second item on each line is the accession number for that particular gene. 
+Now make a program that extracts data from dna-array.dat. It shall ask for an accession number (unless you have given it on the command line). Make sure your program handles both situations. Then it shall search in the file for the data concerning that accession number. If it does not find it (you gave a wrong accession no), complain and stop. Otherwise it shall display the data in two tab separated columns. First column shall be the data from the cancer patients, second column for the controls. And yes, there are not the same number of sick and healthy people - be able to handle that.
+
+#!/usr/bin/python3
+
+import sys
+import re
+
+def readfile():
+  """ get the accession number from command line or input, and read the file dna-array.dat and search for the accession number, return 2 lists with datas of cancer patients and controls """
+  if len(sys.argv)==1:
+    acnum=input('Please enter the accession number you want to search: ')
+    filename=input('Please enter the file name you want to search in: ')
+  if len(sys.argv)>1:
+    acnum=sys.argv[1]
+    filename=sys.argv[2]
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  
+  # Skip the fisr line
+  line = infile.readline()
+  
+  #read the second line and as a compare list
+  line = infile.readline()
+  comparei = re.findall('(0|1)',line)
+  compare = list()
+  compare.extend(comparei)
+  
+  #read the other lines, save as a dictionary with accession number as keys, the list of datas as value
+  content = dict()
+  i = 1
+  for line in infile:
+    acmunber = None
+    data = None
+    acnumber = re.search(r'[A-Z]\d+',line) 
+    if acnumber != None:       
+      data = re.findall('\d+\.\d+',line)
+      if acnumber.group() not in content:
+        content[acnumber.group()] = data
+      if acnumber.group() in content:
+        i += 1
+        content[acnumber.group()].extend(data)
+
+  #extend the compare list cause there are some same accession numbers with different datas
+  compare = i*comparei                         
+  
+  #search the target accession number in the dictionary
+  if acnum not in content:
+    return None,None
+  
+  if acnum in content:
+    cancer = list()
+    control = list()
+    for i in range(0,len(content[acnum])):
+      if int(compare[i]) == 0:
+        cancer.append(content[acnum][i])
+      if int(compare[i]) == 1:
+        control.append(content[acnum][i])
+    return cancer,control
+    
+def printresult(list1,list2):
+  if len(list1) == len(list2):
+    for i in range(0,len(list1)):
+      print(list1[i],'\t',list2[i])
+  if len(list1) < len(list2):
+    for i in range(0,len(list1)):
+      print(list1[i],'\t',list2[i])
+    for i in range(len(list1),len(list2)):
+      print('\t','\t',list2[i])
+  if len(list1) > len(list2):
+    for i in range(0,len(list2)):
+      print(list1[i],'\t',list2[i])
+    for i in range(len(list2),len(list1)):
+      print(list1[i],'\t','\t')
+ 
+#main program
+cancer,control = readfile()
+if cancer == None and control == None:
+  print('The accession number you want to search is not in this file')
+else:  
+  printresult(cancer,control)
+
+
+
+

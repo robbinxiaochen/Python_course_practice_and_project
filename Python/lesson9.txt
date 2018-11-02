@@ -1,0 +1,325 @@
+1. Make a function that take a DNA sequence (string) as parameter and return the complement strand (reverse complement). Use it to improve 7.3 which works on dna7.fsa.
+#!/usr/bin/python3
+
+import sys
+import re
+
+def readfile(): 
+  """ Reads a fasta file and returns 2 lists, one with headers and one with sequences."""
+  if len(sys.argv)==1:
+    filename=input('Please enter the file name you want to open: ')
+  if len(sys.argv)>1:
+    filename=sys.argv[1]
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+  headline =list()
+  dna = list()
+  flag = False
+  sequence=''
+
+  # Skip the fisr line
+  line = infile.readline()
+  headline.append(line[:-1] + " ReversedComplementStrand\n" )
+  flag=True
+  for line in infile:
+    flag = True
+    if line.startswith('>'):
+      flag = False
+      headline.append(line[:-1] + " ReversedComplementStrand\n" )
+      dna.append(sequence)
+      sequence=''
+    if flag: 
+      sq=re.findall('[A-Z]+',line)        
+      sequence += ''. join(sq)
+  dna.append(sequence)
+  infile.close()
+  return(headline, dna)
+
+#a fuction to complement and reverse sequences
+def reverse_complement(sequence):
+  """ reverse and complement the sequences"""
+  revdna=sequence[::-1]
+  translationTable = revdna.maketrans('ATCG','TAGC')
+  complementdna = revdna.translate(translationTable)
+  return complementdna
+  
+# Output sequence
+def wirtefile(list1,list2):
+  """ write the 2 lists into another file"""
+  filehandle = open('revdna.fsa', 'w')
+  i=0  
+  while i < len (list1):
+    filehandle.write(list1[i])
+    for j in range(0,len(list2[i]),60):
+      filehandle.write(list2[i][j:j+60] + "\n")
+    i += 1
+  filehandle.close()
+  
+#main program
+(headline, dna) = readfile(sys.argv[1]) 
+reversecomplementdna=list()
+for i in range(0,len(dna)):
+  reversecomplementdna.append(reverse_complement(dna[i]))
+wirtefile(headline,reversecomplementdna)
+
+2.Improve on 2.10 by making a function that calculates the factorial. Add some input control (make sure you get positive integers, when you ask for a number).
+#!/usr/bin/python3
+import sys
+
+def inputcontrol():
+  '''make sure you get positive integers'''
+  if len(sys.argv)==1:
+    number=int(input('Please enter the number you want to caculate: '))
+  if len(sys.argv)>1:
+    number=int(sys.argv[1])
+  try:
+    if number>0:
+      return(number)
+    else:
+      return
+  except IOError as error:
+    sys.stdout.write("Can't get the number: " + str(error) + "\n")
+    sys.exit(1)
+def factorial(number):
+  '''caculate the factorial of the given number'''
+  result = 1 # 1 is identity for multiplication
+  i = number
+  while i > 0:
+    result *= i
+    i -= 1
+  return(result)
+
+def output(number):
+  '''print the result'''
+  if number is not None:
+    print("Factorial of" , number, "is" , factorial(number))
+  else:
+    print('you did not enter a positive, please enter a positive.')
+
+#main program
+number=inputcontrol()
+output(number)
+
+3.Make a function, that returns the relevant one-letter designation for the correct ammino acid, when you give it a codon (3 bases). You can find a list here. If something invalid is given as input to the function, return an error code (make one up). You can reuse the dictionary from last lesson for most of the exercise, if you want.
+#!/usr/bin/python3
+
+import sys
+
+def translatecodon(bases):
+  if len(bases)==3:
+  # the amino dictionary
+    codon={'ATT':'I', 'ATC':'I', 'ATA':'I', \
+         'CTT':'L', 'CTC':'L', 'CTA':'L', 'CTG':'L','TTA':'L','TTG':'L',\
+         'GTT':'V', 'GTC':'V', 'GTA':'V', 'GTG':'V',\
+         'TTT':'F', 'TTC':'F',\
+         'ATG':'M',\
+         'TGT':'C','TGC':'C',\
+         'GCT':'A', 'GCC':'A', 'GCA':'A', 'GCG':'A',\
+         'GGT':'G', 'GGC':'G','GGA':'G','GGG':'G',\
+         'CCT':'P','CCC':'P','CCA':'P','CCG':'P',\
+         'ACT':'T','ACC':'T','ACA':'T','ACG':'T',\
+         'TCT':'S','TCC':'S','TCA':'S','TCG':'S','AGT':'S','AGC':'S',\
+         'TAT':'Y','TAC':'Y',\
+         'TGG':'W',\
+         'CAA':'Q','CAG':'Q',\
+         'AAT':'N','AAC':'N',\
+         'CAT':'H','CAC':'H',\
+         'GAA':'D','GAG':'D',\
+         'GAT':'H','GAC':'H',\
+         'AAA':'K','AAG':'K',\
+         'CGT':'R','CGC':'R','CGA':'R','CGG':'R','AGA':'R','AGG':'R',\
+         'TAA':'STOP','TAG':'STOP','TGA':'STOP'}
+
+    if bases.upper() in list(codon.keys()):
+      return(codon[bases.upper()])
+    else: 
+      return(bases)
+  else:
+    return
+    
+def getcodon():
+  '''get a codon, return the codon'''
+  if len(sys.argv)==1:
+    codon=input('Please enter the condon: ')
+    return(codon)
+  if len(sys.argv)==2:
+    return(sys.argv[1])
+    
+def output(amino):
+  '''print the translated amino'''
+  try:
+    if amino is None:
+      raise KeyError(" you didn't enter a codon")
+    else:
+      if len(amino)==1:
+        print(' the amino this codon code is: ', amino)
+      if len(amino)==3:
+        raise KeyError(" this condon dose not code aminos")
+  except KeyError as error:
+    sys.stderr.write(str(error) + "\n")
+    sys.exit(1)
+
+#main function
+codon=getcodon()      
+amino=translatecodon(codon)  
+output(amino)
+
+4.Calculate the the standard deviation (1.8355) of the numbers in ex1.dat. The formula leads to directly to a two-pass algorithm, where you will have store all the numbers in memory in order to calculate SD. The inspired programmer will find a one-pass algorithm, where you calulate SD just by looking at a number once, thereby not using significant memory. The genius will explain why there is a difference between the two results. 
+#!/usr/bin/python3
+import sys
+import math
+
+def readfile():
+  '''read a file, return a list of all the numbers'''
+  if len(sys.argv)==1:
+    filename=input('Please enter the file name: ')
+  if len(sys.argv)>1:
+    filename=sys.argv[1]
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+  
+  number=list()
+  for line in infile:
+    st= line[:-1]
+    number += st.split()
+  return number
+  
+def average(list1):
+  '''caculate the average of a list, return the average'''
+  total=0.0
+  average=0.0
+  for i in range(0,len(list1)):
+    total += float(list1[i])
+  average = total/len(list1)
+  return average
+  
+def sd(list1):
+  ''' calculate the standard deviation of a list, return the value'''
+  total=0.0
+  mean = average(list1) 
+  for i in range(0,len(list1)):
+    total += (float(list1[i])-mean)*(float(list1[i])-mean)
+  sd = math.sqrt(total/len(list1))
+  return sd
+
+def output(result):
+  '''print the result'''
+  try:
+    if result != 0.0:
+      print('the standard deviation of numbers is: ', result)
+    else:
+      raise ValueError(" cannot calculate the standard deviation ")
+  except ValueError as error:
+    sys.stderr.write(str(error) + "\n")
+    sys.exit(1)
+
+#main program
+lsitofnumbers = readfile()
+result = sd(lsitofnumbers)
+output(result)
+
+
+
+
+5.Building upon exercise 8.4, which counted the number of occurences of accession numbers, now make the program print the list ordered by the occurrence. That means the accession numbers with most duplicates should be first, and accession numbers which only occurs once should be last in the list.
+'''# High level pseudo code, description
+define a function that reads the file, uses a dict to keep track of every time an accession
+define a function taht sort the accession number
+define a function that print the sortted accession number
+main program:
+ read the fele, get the accession number and occurences
+ sort the accession number and print thwm
+read the file and use a dict to keep track of every time an accession is seen
+# Detailed pseudo code, using code elements
+for each line in file
+   get accession
+   if accession is in the dict
+       increment the value for the accession with 1
+   else
+       put accession in dict with value 1
+save the dictionary into a list begginnin with the occurences
+sort this list and print it'''
+
+#!/usr/bin/python3
+import sys
+import re
+
+def readfile():
+  '''read a file, return the dictionary of accession numbers and their occurences'''
+  if len(sys.argv)==1:
+    filename=input('Please enter the file name you want to open: ')
+  if len(sys.argv)>1:
+    filename=sys.argv[1]
+  # read the file
+  try:
+    infile = open(filename,'r')
+  except IOError as error:
+    sys.stdout.write("Can't open file, reason: " + str(error) + "\n")
+    sys.exit(1)
+
+  acoriginal=dict()
+  for line in infile:
+    ac = None
+    ac = line[:-1]
+    if ac in acoriginal:
+      acoriginal[ac] += 1
+    else:
+     acoriginal[ac] = 1
+  infile.close()
+  return acoriginal
+
+def sortac(dictionary):
+  '''save the dictionary in to a list, and sort it. Return the list'''
+  sortac=list()
+  for item in dictionary:
+    listelement= str(dictionary[item]) + ' ' + item
+    sortac.append(listelement)
+  sortac.sort()
+  sortac.reverse()
+  return sortac
+  
+def output(alist):
+  '''print the result'''
+  try:
+    if len(alist)!=0:
+      print('the accession numbers are: ', alist)
+    else:
+      raise ValueError(" There is no accesion number in this list")
+  except ValueError as error:
+    sys.stderr.write(str(error) + "\n")
+    sys.exit(1)
+  return
+
+#main program
+acdictionary = readfile()
+acsortedlist = sortac(acdictionary)
+output(acsortedlist)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

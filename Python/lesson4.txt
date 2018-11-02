@@ -1,0 +1,385 @@
+1. Make a program that asks for two numbers (integers), and calculates the mean (average) of those numbers. The mean must be converted to an integer. Displays result along with input numbers.
+#!/usr/bin/python3
+a=int(input('Please enter an integer: '))
+b=int(input('Please enter an integer: '))
+c=(a+b)/2
+print('the mean of the 2 integers is:')
+print(int(c))
+
+2. Create a new file that contains two integers (one integer per line). Remake the program from exercise nr 1, in the way that two numbers are read from STDIN (instead asking for user input as in ex nr 1). 
+
+From the terminal feed the file to your program using already learned unix techniques.
+
+
+The file created is Integers
+
+#£¡/usr/bin/python3
+sum=0
+infile = open('Integers','r')
+for line in infile:
+   a = int(line)
+   sum=sum+a
+infile.close()
+c=sum/2
+print('the mean of the 2 integers is: ' )
+print(int(c))
+
+3. Write a program that counts the number of negative numbers in ex1.dat file. Display the result.
+#!/usr/bin/python3
+infile = open('ex1.dat','r')
+neg=0;
+
+for line in infile:
+   a=str(line)
+   c='-'
+   if c in a:
+     neg=neg+1
+   
+infile.close()
+print('the negative numbers is: ')
+print(neg)
+
+4. Write a program that converts temperatures from Fahrenheit to Celsius or visa versa given input like "36F" of "15C" ( F = (C * 9/5) + 32 ).
+
+#!/usr/bin/python3
+tem=str(input('please enter a temperature like 35F or 15C: ' ))
+strlength=len(tem)             
+a=tem[strlength-1]                                              #extracting the temperature type
+newstr=tem[0:strlength-2]    
+b=int(newstr)                                                   #extracting the temperature number
+
+if a == 'F':
+  newtem=(b-32)*(9/5)
+  print('the transfered temperature is:'),
+  print(int(newtem)),
+  print('C')
+if a == 'C':
+  newtem=((b* 9/5)+32)
+  print('the transfered temperature is:'),
+  print(int(newtem)),
+  print('F')
+
+
+5. Read the file orphans.sp and find all accession numbers, save them in another file of your choosing. Hint: an accession number might look like this AB000114.CDS.1. Consider .CDS.1 as a part of the accession number. Accession numbers differ in length for historical reasons.
+
+#!/usr/bin/python3
+infile = open('orphans.sp','r')
+outfile = open('Accession.txt','w')
+for line in infile:
+   a = str(line)
+   c = '.CDS.1'
+   if c in a:
+      outfile.write(a)
+      outfile.write('\n')
+outfile.close()
+infile.close()
+
+6. Make a new program thats ask for two filenames, one at a time. It should then display the merged lines from both files, i.e. the first line from the first file concatenated (with tab) with the first line from the second file, and so forth. The output should be like that of the UNIX command paste. Try with the files ex1.acc and ex1.dat and compare with the same UNIX paste command, exercise 1.14. It should be the same.
+
+#!/usr/bin/python3
+infile1 = open('ex1.acc','r')
+infile2 = open('ex1.dat','r') 
+outfile = open('mergefile.txt','w')
+for line1 in infile1: 
+  a = str(line1) 
+  for line2 in infile2:
+    b = str(a+'\t'+line2)
+  outfile.write(b)
+  outfile.write('\n')
+outfile.close()
+infile1.close()
+infile2.close()
+
+
+7. This and the following exercise aims to make the reverse complement string (called "complement strand") of DNA. There is some human DNA in dna.dat file. Read the file and put all the DNA in one variable. Now complement the DNA and store it in other variable. Display and ensure that it works. HINT: Complementing means changing all A's to T's, T's to A's, C's to G's and G's to C's.
+dna.dat
+
+#!/usr/bin/python3
+infile = open('dna.dat','r')
+sdna=''
+for line in infile:
+  dna=str(line)
+  sdna=sdna+dna
+i=0
+t='T'
+a='A'
+c='C'
+g='G'
+newsdna=''
+for i in range(len(sdna)):
+  if sdna[i]==t:
+    newsdna=newsdna+a
+  if sdna[i]==a:
+    newsdna=newsdna+t
+  if sdna[i]==c:
+    newsdna=newsdna+g
+  if sdna[i]==g:
+    newsdna=newsdna+c
+infile.close()
+outfile = open('complement.dat','w')
+outfile.write(newsdna)
+outfile.write('\n')
+outfile.close()
+  
+8. Now reverse the DNA after complementing it. Reverse means last letter (base) should be the first, next to last should be the second, and so forth. Display.
+
+#!/usr/bin/python3
+
+infile = open('complement.dat','r')
+dna2=''
+odna=''
+for line in infile:
+  dna1=str(line)
+  odna=odna+dna1
+  i=len(dna1)-1
+  while i>=0 :
+   dna2=dna2+dna1[i]
+   i = i-1
+
+print('the oringinal DNA is:')
+print(dna1)
+print('\n')
+print('the reversed DNA is: ')
+print(dna2)
+infile.close()
+  
+
+
+
+9. Now write the DNA in the file revdna.dat. Make it look nice, just like dna.dat, i.e. 60 letters per line. This does NOT mean that you should insert newlines in the variable containing your complement strand (contamination of clean data you possibly should use later in the program). It just means that DNA in the output file must have 60 chars per line, just as in the input file.
+
+#!/usr/bin/python3
+
+infile = open('complement.dat','r')
+dna2=''
+odna=''
+for line in infile:
+  dna1=str(line)
+  odna=odna+dna1
+  i=len(dna1)-1
+  while i>=0 :
+   dna2=dna2+dna1[i]
+   i = i-1
+
+outfile = open('redna.dat','w')
+i=0
+while i<=(len(dna2)-1):
+  outfile.write(dna2[i])
+  if i%60 == 0 and i!=0:
+    outfile.write('\n')
+  i=i+1
+outfile.close()
+infile.close()
+
+10. In the file dna.fsa is the same human DNA in FASTA format. This format is VERY often used in bioinformatics. Look at it using less and get used to the format. Observe the first line which starts with a > and identifies the sequence. The name (AB000410 in this case) MUST uniquely identify a sequence in the file. This is a DNA (actually mRNA) sequence taken from the GenBank database. Now make a program that reverse complements the sequence and writes it into the file revdna.fsa just like you did in previous assignments. This time you have to keep the first identifying line, so the sequence can be identified. You must add 'ComplementStrand' in the end of that line, though, so you later know that it is the complement strand.
+Summary: Keep the first line and reverse complement the sequence.
+Command: less dna.fsa
+
+#!/usr/bin/python3
+
+infile = open('dna.fsa','r')
+outfile = open('revdna.fsa','w')
+i=0
+for line in infile:
+  i = i+1
+
+  if i==1:
+    dna=str(line)
+    dna=dna+'\t'+'ComplementStrand'
+    outfile.write(dna)
+    outfile.write('\n')
+
+  if i!=1:
+    dna=str(line)
+    newsdna=''
+    t='T'
+    a='A'
+    c='C'
+    g='G'
+    l=0
+    while l<=len(dna)-1:
+        if dna[l]==t:
+          newsdna=newsdna+a
+        if dna[l]==a:
+          newsdna=newsdna+t
+        if dna[l]==c:
+          newsdna=newsdna+g
+        if dna[l]==g:
+          newsdna=newsdna+c
+        l=l+1
+    outfile.write(newsdna)
+    outfile.write('\n')
+
+infile.close() 
+outfile.close()
+
+
+
+11. Now you must analyse the AT/GC content of the DNA in the file dna.fsa. You must count all A, T, C and G, and display the result.
+#!/usr/bin/python3
+
+infile = open('dna.fsa','r')
+t,a,c,g,l=0,0,0,0,0
+for line in infile:
+  l=l+1
+  if l!=1:
+   dna=str(line)
+   for i in range(len(dna)):
+     if dna[i]=='T':
+       t=t+1
+     if dna[i]=='A':
+       a=a+1
+     if dna[i]=='C':
+       c=c+1
+     if dna[i]=='G':
+       g=g+1
+print('the T bases number in this sequence is:')
+print(t)
+print('\n')
+print('the A bases number in this sequence is:')
+print(a)
+print('\n')
+print('the C bases number in this sequence is:')
+print(c)
+print('\n')
+print('the G bases number in this sequence is:')
+print(g)
+print('\n')
+
+
+12. Write a program that prints a "bulls-eye" to STDOUT using characters like; '.', '+', '*', '#', etc. Here is an example. 
+ 
+You have to import the math library, in order to access the squareroot (sqrt), sine (sin), cosine (cos), and so forth functions. The square root of x is gotten like math.sqrt(x) 
+I only used: for, if, elif, print, +, -, /, **, int, sqrt for this 40x40 example.
+Hint: Think of a grid where one point is the center of the eye.
+
+#!/usr/bin/python3
+
+import math
+i=1                                                  #line number                           
+while i<=10:                                         #first ten lines   
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))               
+   n=1                                    
+   for n in range(1,20-a+1):                         #print space
+     print(" ",end='')
+   plus=1
+   for plus in range(1,2*(a+1)):                     #print '+'
+     print("+",end='')
+   print('\n')
+   i=i+1
+
+while i>10 and i<=15:                  #10th to 15th line
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   dot = 1
+   for dot in range(1,2*(a-10)+1):
+     print(".",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   n=1                                 
+   for n in range(1,20-a+1):                         
+     print(" ",end='')
+   print('\n')
+   i=i+1
+   
+while i>15 and i<=20:                  #15th to 20th line
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   dot = 1
+   for dot in range(1,6):
+     print('.',end='')
+   star = 1
+   for star in range(1,2*(a-15)+1):
+     print('*',end='')
+   dot = 1
+   for dot in range(1,6):
+     print('.',end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   print('\n')
+   i += 1
+
+i=19
+while i>=15:
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   dot = 1
+   for dot in range(1,6):
+     print('.',end='')
+   star = 1
+   for star in range(1,2*(a-15)+1):
+     print('*',end='')
+   dot = 1
+   for dot in range(1,6):
+     print('.',end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   print('\n')
+   i = i- 1
+
+while i>=10:
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))
+   n=1                                
+   for n in range(1,20-a+1):                       
+     print(" ",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   dot = 1
+   for dot in range(1,2*(a-10)+1):
+     print(".",end='')
+   plus=1
+   for plus in range(1,11):
+      print("+",end='')
+   print('\n')
+   i=i-1 
+ 
+while i>=1:
+   a = int(math.sqrt(20*20-(20-i)*(20-i)))               
+   n=1                                    
+   for n in range(1,20-a+1):                        
+     print(" ",end='')
+   plus=1
+   for plus in range(1,2*(a+1)):
+     print("+",end='')
+   print('\n')
+   i=i-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
